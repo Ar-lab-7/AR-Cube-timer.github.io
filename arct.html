@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=720, height=1368, initial-scale=1.0">
+  <title>AR Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      width: 720px;
+      height: 1368px;
+      overflow-y: scroll;
+    }
+
+    body {
+      user-select: none;
+    }
+
+    header {
+      background-color: black;
+      color: white;
+      height: 4%;
+      padding: 5px;
+      text-align: center;
+    }
+
+    .scramble {
+      height: 5%;
+    }
+
+    .inspection {
+      height: 5%;
+      font-weight: bold;
+      color: black;
+      font-size: 15px;
+    }
+
+    #q2 {
+      font-size: 30px;
+    }
+
+    .penalty-options {
+      height: 8%;
+      font-weight: bold;
+      color: black;
+      font-size: 15px;
+    }
+
+    .history {
+      height: 23%;
+    }
+
+    .scramble,
+    .inspection,
+    .timer,
+    .penalty-options,
+    .history {
+      margin: 5px;
+      padding: 5px;
+      border-top: 2px solid black;
+      text-align: center;
+    }
+
+    .scramble span {
+      font-weight: bold;
+      color: brown;
+      font-size: 20px;
+    }
+
+    .inspection-time {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .time-display {
+      font-size: 7rem;
+      font-weight: bold;
+    }
+
+    .penalty-options span {
+      margin: 0 5px;
+      cursor: pointer;
+      color: blue;
+      text-decoration: underline;
+    }
+
+    .penalty-options span:hover {
+      color: red;
+    }
+
+    .history {
+      text-align: left;
+      margin: 0 auto;
+      width: 90%;
+    }
+
+    .history-stats {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .history-stats span {
+      margin-right: 15px;
+    }
+
+    .history-records {
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid black;
+      padding: 5px;
+    }
+  button{
+ 
+            background: radial-gradient(circle, #ffffff, #00ff00);
+          
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 10px #00ff00, 0 0 40px #00ff00;
+            cursor: pointer;
+            transition: transform 0.2s;
+  }
+
+    footer {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: gray;
+    }
+  @media (max-width: 1024px) {
+  body {
+    width: auto;
+    height: auto;
+    padding: 10px;
+  }
+
+  .time-display {
+    font-size: 5rem;
+  }
+
+  .inspection-time {
+    font-size: 1.5rem;
+  }
+
+  .history-records {
+    height: 150px;
+  }
+}
+
+@media (min-width: 808px) {
+  body {
+    font-size: 14px;
+  }
+
+  .time-display {
+    font-size: 4rem;
+  }
+
+  .inspection-time {
+    font-size: 1.2rem;
+  }
+
+  .history-records {
+    height: 120px;
+  }
+
+  header h2 {
+    font-size: 1.5rem;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <header>
+    <h2>AR TIMER</h2>
+  </header>
+
+  <div class="scramble">
+    <span id="q1">Scramble:<span>
+        <span id="scramble">Generating...<span>
+  </div>
+
+  <div class="inspection">
+    <span id="q2">Inspection Time:</span>
+    <span class="inspection-time" id="inspectionTime">00</span>
+    <p>(click on the inspection screen to start)</p>
+  </div>
+
+  <div class="timer">
+    <h2>Time Screen</h2>
+    <p class="time-display" id="timeDisplay">0:00:000</p>
+    <p>(press the stopwatch to start/stop)</p>
+  </div>
+
+  <div class="penalty-options">
+    <h3>Add penalty if any:</h3>
+    <p>
+      <span onclick="applyPenalty(0)">no penalty</span> |
+      <span onclick="applyPenalty(2)">+2</span> |
+      <span onclick="applyPenalty(4)">+4</span> |
+      <span onclick="applyPenalty(6)">+6</span> |
+      <span onclick="applyPenalty(8)">+8</span> |
+      <span onclick="applyPenalty(10)">+10</span> |
+      <span onclick="applyPenalty(12)">+12</span> |
+      <span onclick="applyPenalty(14)">+14</span> |
+      <span onclick="applyPenalty(4)">+16</span> |
+      <span onclick="applyPenalty('DNF')">DNF</span>
+    </p>
+    <p>Selected Time: <span id="penaltyTime">0:00:000</span></p>
+  </div>
+
+  <div class="history">
+    <h2>Time History</h2>
+    <div class="history-stats">
+      <span>Best: <span id="bestTime">--</span></span>
+      <span>Worst: <span id="worstTime">--</span></span>
+      <span>Average: <span id="averageTime">--</span></span>
+      <span>
+        Average of <input type="number" id="averageInput" value="5" min="1" max="999" style="width: 50px;">:
+        <span id="averageOfX">--</span>
+      </span>
+    </div>
+    <div class="history-records" id="historyRecords"></div>
+  </div>
+<button id="downloadCSV" onclick="downloadCSV()">Download history</button>
+  <footer>
+    <p>AR Timer © 2024</p>
+  </footer>
+  <script>
+    const scrambleElement = document.getElementById("scramble");
+    const inspectionTimeElement = document.getElementById("inspectionTime");
+    const timeDisplay = document.getElementById("timeDisplay");
+    const penaltyTimeElement = document.getElementById("penaltyTime");
+    const historyRecordsElement = document.getElementById("historyRecords");
+    const bestTimeElement = document.getElementById("bestTime");
+    const worstTimeElement = document.getElementById("worstTime");
+    const averageTimeElement = document.getElementById("averageTime");
+    const averageOfXElement = document.getElementById("averageOfX");
+    const averageInput = document.getElementById("averageInput");
+    let scramble = generateScramble();
+    let inspectionTimer;
+    let stopwatchTimer;
+    let inspectionTime = 0;
+    let stopwatchTime = 0;
+    let isStopwatchRunning = false;
+    let selectedSolveTime = 0;
+    let history = JSON.parse(localStorage.getItem("timeHistory")) || [];
+    scrambleElement.textContent = scramble;
+    updateHistory();
+    updateStats();
+
+    function generateScramble() {
+      const moves = ["U", "D", "L", "R", "F", "B"];
+      const modifiers = ["", "'", "2"];
+      let scramble = [];
+      let lastMove = "";
+      for (let i = 0; i < 20; i++) {
+        let move;
+        do {
+          move = moves[Math.floor(Math.random() * moves.length)];
+        } while (move === lastMove);
+        lastMove = move;
+        const modifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+        scramble.push(move + modifier);
+      }
+      return scramble.join(" ");
+    }
+    document.querySelector(".inspection").onclick = function() {
+      clearInterval(inspectionTimer);
+      inspectionTime = 15;
+      inspectionTimer = setInterval(() => {
+        inspectionTime--;
+        inspectionTimeElement.textContent = inspectionTime.toString().padStart(2, "0");
+        if (inspectionTime <= 0) clearInterval(inspectionTimer);
+      }, 1000);
+    };
+    document.querySelector(".timer").onclick = function() {
+      if (isStopwatchRunning) {
+        clearInterval(stopwatchTimer);
+        isStopwatchRunning = false;
+        // Show time in penalty section
+        selectedSolveTime = stopwatchTime;
+        penaltyTimeElement.textContent = formatTime(selectedSolveTime);
+      } else {
+        stopwatchTime = 0;
+        timeDisplay.textContent = formatTime(stopwatchTime);
+        stopwatchTimer = setInterval(() => {
+          stopwatchTime += 10;
+          timeDisplay.textContent = formatTime(stopwatchTime);
+        }, 10);
+        isStopwatchRunning = true;
+        // Reset inspection timer
+        clearInterval(inspectionTimer);
+        inspectionTime = 0;
+        inspectionTimeElement.textContent = "00";
+      }
+    };
+
+    function formatTime(timeInMilliseconds) {
+      const milliseconds = timeInMilliseconds % 1000;
+      const seconds = Math.floor(timeInMilliseconds / 1000) % 60;
+      const minutes = Math.floor(timeInMilliseconds / 60000);
+      return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${milliseconds.toString().padStart(3, "0")}`;
+    }
+
+    function applyPenalty(penalty) {
+      let finalTime = selectedSolveTime;
+      let penaltyText = penalty === "DNF" ? "DNF" : penalty ? `+${penalty}` : "no penalty";
+      if (penalty !== "DNF") {
+        finalTime += penalty * 1000; // Add penalty in milliseconds
+      }
+      let formattedTime = penalty === "DNF" ? "DNF" : formatTime(finalTime);
+      // Add to history
+      saveTime(scramble, finalTime, penaltyText);
+      // Generate new scramble
+      scramble = generateScramble();
+      scrambleElement.textContent = scramble;
+      // Reset penalty section
+      penaltyTimeElement.textContent = "0:00:000";
+      // Update stats
+      updateStats();
+    }
+
+    function saveTime(scramble, time, penalty) {
+      history.push({
+        scramble,
+        time,
+        penalty
+      });
+      localStorage.setItem("timeHistory", JSON.stringify(history));
+      updateHistory();
+    }
+
+    function updateHistory() {
+      historyRecordsElement.innerHTML = history
+        .map(
+          (record, index) =>
+          `${index + 1}. ${record.scramble} : ${formatTime(record.time)} (${record.penalty})`
+        )
+        .join("<br>");
+    }
+
+    function updateStats() {
+      const validTimes = history
+        .filter(record => record.penalty !== "DNF")
+        .map(record => record.time);
+      if (validTimes.length === 0) {
+        bestTimeElement.textContent = "--";
+        worstTimeElement.textContent = "--";
+        averageTimeElement.textContent = "--";
+        averageOfXElement.textContent = "--";
+        return;
+      }
+      const best = Math.min(...validTimes);
+      const worst = Math.max(...validTimes);
+      const average = validTimes.reduce((sum, time) => sum + time, 0) / validTimes.length;
+      bestTimeElement.textContent = formatTime(best);
+      worstTimeElement.textContent = formatTime(worst);
+      averageTimeElement.textContent = formatTime(average);
+      // Calculate the average of the specified number of recent solves
+      const numberOfSolves = parseInt(averageInput.value) || 5;
+      const recentTimes = validTimes.slice(-numberOfSolves);
+      if (recentTimes.length > 0) {
+        const recentAverage =
+          recentTimes.reduce((sum, time) => sum + time, 0) / recentTimes.length;
+        averageOfXElement.textContent = formatTime(recentAverage);
+      } else {
+        averageOfXElement.textContent = "--";
+      }
+    }
+    // Recalculate stats when the user changes the number of solves for the average
+    averageInput.addEventListener("input", updateStats);
+          function downloadCSV() {
+  if (history.length === 0) {
+    alert("No history available to download.");
+    return;
+  }
+
+  // Define CSV content
+  const csvContent = [
+    ["Scramble", "Time", "Penalty"], // CSV headers
+    ...history.map(record => [
+      record.scramble,
+      record.time === "DNF" ? "DNF" : formatTime(record.time),
+      record.penalty
+    ])
+  ]
+    .map(row => row.join(",")) // Convert rows to CSV format
+    .join("\n");
+
+  // Create a Blob and trigger download
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "time_history.csv";
+  link.click();
+}
+  </script>
+</body>
+
+</html>
